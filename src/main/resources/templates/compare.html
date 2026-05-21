@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Compare Laptops</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body th:classappend="${mode == 'pro'} ? 'pro-mode' : ''">
+
+<canvas id="binary-rain"></canvas>
+
+<!-- Dark Mode Toggle -->
+<div class="dark-toggle" id="darkToggle" onclick="toggleDarkMode()">☀️</div>
+
+    <div class="container" style="position:relative;">
+        <div style="position: absolute; top: 0rem; left: 0rem; z-index: 10; display: flex; flex-direction: column; gap: 0.5rem;">
+            <a th:href="@{/}" class="btn btn-outline" style="width: auto; padding: 0.5rem 1rem; text-decoration: none; font-weight: bold; border-radius: 8px;">⌂ Home</a>
+            <a href="javascript:history.back()" class="btn btn-outline" style="width: auto; padding: 0.5rem 1rem; text-decoration: none; font-weight: bold; border-radius: 8px;">← Back</a>
+        </div>
+
+        <div class="header" style="padding-top: 1.5rem;">
+            <h1 th:text="${mode == 'pro'} ? '>_ Compare' : '⚖️ Side-by-Side Comparison'">Compare</h1>
+            <p>Comparing <strong th:text="${#lists.size(laptops)}">0</strong> laptops head-to-head.</p>
+        </div>
+
+        <!-- Radar Overlay Chart -->
+        <div class="glass-card" style="margin-bottom: 2rem;">
+            <h3 style="text-align:center; margin-bottom:1rem;">Value Radar Overlay</h3>
+            <div style="max-width: 400px; margin: 0 auto;">
+                <canvas id="radarOverlay" width="400" height="400"></canvas>
+            </div>
+        </div>
+
+        <!-- Comparison Table -->
+        <div class="glass-card compare-grid">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Spec</th>
+                        <th th:each="laptop : ${laptops}" th:text="${laptop.title}">Laptop</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- PRICING -->
+                    <tr class="spec-category">
+                        <td th:colspan="${#lists.size(laptops) + 1}">💰 Pricing</td>
+                    </tr>
+                    <tr>
+                        <td>Price</td>
+                        <td th:each="laptop : ${laptops}" th:text="'₹' + ${#numbers.formatDecimal(laptop.price, 1, 0)}">₹0</td>
+                    </tr>
+
+                    <!-- PERFORMANCE -->
+                    <tr class="spec-category">
+                        <td th:colspan="${#lists.size(laptops) + 1}">⚡ Performance</td>
+                    </tr>
+                    <tr>
+                        <td>CPU</td>
+                        <td th:each="laptop : ${laptops}" th:text="${laptop.cpu}">—</td>
+                    </tr>
+                    <tr>
+                        <td>GPU</td>
+                        <td th:each="laptop : ${laptops}" th:text="${laptop.gpu}">—</td>
+                    </tr>
+                    <tr>
+                        <td>RAM</td>
+                        <td th:each="laptop : ${laptops}" th:text="${laptop.ramGB} + ' GB'">—</td>
+                    </tr>
+                    <tr>
+                        <td>Storage</td>
+                        <td th:each="laptop : ${laptops}" th:text="${laptop.storageCapacity}">—</td>
+                    </tr>
+                    <tr>
+                        <td>Geekbench 5 (Single)</td>
+                        <td th:each="laptop : ${laptops}" th:text="${laptop.geekbenchSingle}">0</td>
+                    </tr>
+                    <tr>
+                        <td>Geekbench 5 (Multi)</td>
+                        <td th:each="laptop : ${laptops}" th:text="${laptop.geekbenchMulti}">0</td>
+                    </tr>
+                    <tr>
+                        <td>Cinebench</td>
+                        <td th:each="laptop : ${laptops}" th:text="${laptop.cinebenchScore}">0</td>
+                    </tr>
+
+                    <!-- DISPLAY -->
+                    <tr class="spec-category">
+                        <td th:colspan="${#lists.size(laptops) + 1}">🖥️ Display</td>
+                    </tr>
+                    <tr>
+                        <td>Panel</td>
+                        <td th:each="laptop : ${laptops}" th:text="${laptop.displaySize} + '&quot; ' + ${laptop.displayType}">—</td>
+                    </tr>
+                    <tr>
+                        <td>Resolution</td>
+                        <td th:each="laptop : ${laptops}" th:text="${laptop.resolution}">—</td>
+                    </tr>
+                    <tr>
+                        <td>Refresh Rate</td>
+                        <td th:each="laptop : ${laptops}" th:text="${laptop.refreshRate} + ' Hz'">—</td>
+                    </tr>
+
+                    <!-- DESIGN & PORTABILITY -->
+                    <tr class="spec-category">
+                        <td th:colspan="${#lists.size(laptops) + 1}">🎒 Design & Battery</td>
+                    </tr>
+                    <tr>
+                        <td>Weight</td>
+                        <td th:each="laptop : ${laptops}" th:text="${laptop.weight} + ' kg'">—</td>
+                    </tr>
+                    <tr>
+                        <td>Battery Life</td>
+                        <td th:each="laptop : ${laptops}" th:text="${laptop.batteryLife} + ' hrs'">—</td>
+                    </tr>
+                    <tr>
+                        <td>Build Material</td>
+                        <td th:each="laptop : ${laptops}" th:text="${laptop.buildMaterial}">—</td>
+                    </tr>
+                    <tr>
+                        <td>Speakers</td>
+                        <td th:each="laptop : ${laptops}" th:text="${laptop.speakerQuality}">—</td>
+                    </tr>
+
+                    <!-- ACTIONS -->
+                    <tr class="spec-category">
+                        <td th:colspan="${#lists.size(laptops) + 1}">🛒 Actions</td>
+                    </tr>
+                    <tr>
+                        <td>Store Link</td>
+                        <td th:each="laptop : ${laptops}">
+                            <a th:href="'https://www.amazon.in/s?k=' + ${laptop.title}" target="_blank" class="btn btn-buy" style="padding:0.4rem 1rem; font-size:0.85rem; text-decoration:none;">Buy Now</a>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div style="text-align:center; margin: 3rem 0;">
+            <a onclick="history.back()" class="btn btn-outline" style="text-decoration:none; cursor:pointer;">← Back to Results</a>
+        </div>
+    </div>
+
+    <script th:inline="javascript">
+        /*<![CDATA[*/
+        const mode = /*[[${mode}]]*/ 'basic';
+        const laptops = /*[[${laptops}]]*/ [];
+        const isPro = mode === 'pro';
+
+        // Colors for up to 5 laptops
+        const colorPalette = isPro
+            ? ['rgba(0,255,0,', 'rgba(0,200,100,', 'rgba(100,255,0,', 'rgba(0,255,200,', 'rgba(200,255,0,']
+            : ['rgba(0,113,227,', 'rgba(255,59,48,', 'rgba(52,199,89,', 'rgba(255,149,0,', 'rgba(175,82,222,'];
+
+        // Dark mode init
+        if (localStorage.getItem('darkMode') === 'true') {
+            document.body.classList.add('dark-mode');
+            document.getElementById('darkToggle').textContent = '🌙';
+        }
+        let isDarkInitial = document.body.classList.contains('dark-mode');
+
+        // Radar overlay
+        const radarEl = document.getElementById('radarOverlay');
+        let radarChart = null;
+
+        if (radarEl && laptops.length > 0) {
+            const datasets = laptops.map(function(l, i) {
+                const c = colorPalette[i % colorPalette.length];
+                return {
+                    label: l.title.substring(0, 25),
+                    data: [l.perfScore, l.displayScore, l.portabilityScore, l.buildScore, l.batteryScore],
+                    fill: true,
+                    backgroundColor: c + '0.1)',
+                    borderColor: c + '0.9)',
+                    borderWidth: 2,
+                    pointBackgroundColor: c + '1)',
+                    pointRadius: 3
+                };
+            });
+
+            let initTextColor = isPro ? (isDarkInitial ? '#ffffff' : '#000000') : (isDarkInitial ? '#ffffff' : '#000000');
+            let initGridColor = isPro ? (isDarkInitial ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.1)') : (isDarkInitial ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.08)');
+
+            radarChart = new Chart(radarEl.getContext('2d'), {
+                type: 'radar',
+                data: {
+                    labels: ['Performance', 'Display', 'Portability', 'Build', 'Battery'],
+                    datasets: datasets
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        r: {
+                            beginAtZero: true,
+                            max: 100,
+                            ticks: { display: false },
+                            grid: { color: initGridColor },
+                            pointLabels: {
+                                color: initTextColor,
+                                font: { size: 12, family: 'Inter' }
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            labels: {
+                                color: initTextColor,
+                                font: { family: 'Inter', size: 11 }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Highlight winners in table
+        document.querySelectorAll('.compare-grid tbody tr').forEach(function(row) {
+            const cells = row.querySelectorAll('td');
+            if (cells.length <= 2) return; // skip if only 1 laptop + label
+
+            // Find numeric values for comparison
+            const values = [];
+            for (let i = 1; i < cells.length; i++) {
+                const txt = cells[i].textContent.replace(/[₹,\s]/g, '').replace(/[a-zA-Z]/g, '');
+                values.push(parseFloat(txt) || 0);
+            }
+
+            const label = cells[0].textContent.toLowerCase();
+            const lowerIsBetter = label.includes('price') || label.includes('weight');
+            const bestVal = lowerIsBetter ? Math.min(...values) : Math.max(...values);
+
+            for (let i = 0; i < values.length; i++) {
+                if (values[i] === bestVal && values[i] !== 0) {
+                    cells[i + 1].classList.add('compare-winner');
+                }
+            }
+        });
+
+        function toggleDarkMode() {
+            document.body.classList.toggle('dark-mode');
+            const isDark = document.body.classList.contains('dark-mode');
+            localStorage.setItem('darkMode', isDark);
+            document.getElementById('darkToggle').textContent = isDark ? '🌙' : '☀️';
+            
+            if (radarChart) {
+                let textColor = isPro ? (isDark ? '#ffffff' : '#000000') : (isDark ? '#ffffff' : '#000000');
+                let gridColor = isPro ? (isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.1)') : (isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.08)');
+                radarChart.options.scales.r.grid.color = gridColor;
+                radarChart.options.scales.r.pointLabels.color = textColor;
+                radarChart.options.plugins.legend.labels.color = textColor;
+                radarChart.update();
+            }
+        }
+
+        // Pro mode binary rain
+        if (isPro) {
+            const canvas = document.getElementById('binary-rain');
+            const rctx = canvas.getContext('2d');
+            function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+            resize(); window.addEventListener('resize', resize);
+            const fs = 14, cols = Math.floor(canvas.width / fs);
+            const drops = Array(cols).fill(1);
+            function draw() {
+                rctx.fillStyle = 'rgba(0,0,0,0.05)';
+                rctx.fillRect(0, 0, canvas.width, canvas.height);
+                rctx.fillStyle = '#00ff00';
+                rctx.font = fs + 'px "Share Tech Mono", monospace';
+                for (let i = 0; i < drops.length; i++) {
+                    rctx.globalAlpha = 0.15 + Math.random() * 0.3;
+                    rctx.fillText(Math.random() > 0.5 ? '1' : '0', i * fs, drops[i] * fs);
+                    if (drops[i] * fs > canvas.height && Math.random() > 0.975) drops[i] = 0;
+                    drops[i]++;
+                }
+                rctx.globalAlpha = 1;
+                requestAnimationFrame(draw);
+            }
+            draw();
+        }
+        /*]]>*/
+    </script>
+</body>
+</html>

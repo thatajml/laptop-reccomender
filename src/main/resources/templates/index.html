@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LaptopFinder — AI Laptop Recommender</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body id="appBody">
+
+<!-- Floating background elements for premium feel -->
+<div class="floating-laptops" id="floatingLaptops">
+    <div class="laptop-icon l-1">💻</div>
+    <div class="laptop-icon l-2">💻</div>
+    <div class="laptop-icon l-3">💻</div>
+    <div class="laptop-icon l-4">💻</div>
+</div>
+
+<canvas id="binary-rain"></canvas>
+
+<!-- Dark Mode Toggle -->
+<div class="dark-toggle" id="darkToggle" onclick="toggleDarkMode()">☀️</div>
+
+<!-- ============================================================
+     WELCOME SCREEN
+     ============================================================ -->
+<div class="welcome-overlay" id="welcomeScreen">
+    <span class="welcome-title">💻 LaptopFinder</span>
+    <p class="welcome-sub">Smart, real-world laptop recommendations driven by your exact needs.</p>
+
+    <div class="mode-cards">
+        <div class="mode-card mode-basic" onclick="selectMode('basic')">
+            <span class="mode-icon">✨</span>
+            <h2>Basic Mode</h2>
+            <p>Quick recommendations with essential filters — perfect for most users.</p>
+        </div>
+        <div class="mode-card mode-pro" onclick="selectMode('pro')">
+            <span class="mode-icon">⚡</span>
+            <h2>&gt;_ Pro Mode</h2>
+            <p>Deep customization — choose CPU tier, generation, ports, build quality, and more.</p>
+        </div>
+    </div>
+</div>
+
+<!-- ============================================================
+     MAIN CONTENT (hidden until mode selected)
+     ============================================================ -->
+<div class="container" id="mainContent" style="display:none;">
+    <!-- Use-Case Presets -->
+    <div class="preset-bar" id="presetBar">
+        <div class="preset-card" onclick="applyPreset('gaming')">
+            <span class="preset-icon">🎮</span> Gaming Beast
+        </div>
+        <div class="preset-card" onclick="applyPreset('student')">
+            <span class="preset-icon">📚</span> Student Budget
+        </div>
+        <div class="preset-card" onclick="applyPreset('creative')">
+            <span class="preset-icon">🎨</span> Content Creator
+        </div>
+        <div class="preset-card" onclick="applyPreset('developer')">
+            <span class="preset-icon">💻</span> Developer Workstation
+        </div>
+    </div>
+
+    <div class="header">
+        <h1 id="pageTitle">Find Your Perfect Build</h1>
+        <p id="pageSubtitle">Based on your selected preferences.</p>
+    </div>
+
+    <div class="main-layout">
+        <div class="form-section">
+            <div class="glass-card">
+                <form th:action="@{/recommend}" method="post" id="mainForm">
+                    <input type="hidden" name="mode" id="modeInput" value="basic">
+
+                    <!-- ===================== COMMON FIELDS ===================== -->
+                    <div class="form-group">
+                        <label for="budget">Budget (₹)</label>
+                        <input type="number" id="budget" name="budget" class="form-control" required placeholder="e.g. 100000" min="20000" step="5000" oninput="updateSnapshot()">
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="ram">Minimum RAM</label>
+                            <select id="ram" name="ram" class="form-control" required onchange="updateSnapshot()">
+                                <option value="8" selected>8 GB</option>
+                                <option value="16">16 GB</option>
+                                <option value="32">32 GB</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="purpose">Primary Purpose</label>
+                            <select id="purpose" name="purpose" class="form-control" required onchange="updateSnapshot()">
+                                <option value="student">Student / Office</option>
+                                <option value="gaming">Gaming</option>
+                                <option value="creative">Creative / Design</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="displaySize">Display Size</label>
+                            <select id="displaySize" name="displaySize" class="form-control" onchange="updateSnapshot()">
+                                <option value="any">No Preference</option>
+                                <option value="13-14">13" – 14" Portable</option>
+                                <option value="15-16">15" – 16" Standard</option>
+                                <option value="17+">17"+ Large</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="displayType">Display Type</label>
+                            <select id="displayType" name="displayType" class="form-control" onchange="updateSnapshot()">
+                                <option value="any">No Preference</option>
+                                <option value="IPS">IPS (Standard)</option>
+                                <option value="OLED/Mini-LED">OLED / Mini-LED</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="chipset">Chipset Preference</label>
+                        <select id="chipset" name="chipset" class="form-control" onchange="onChipsetChange(); updateSnapshot();">
+                            <option value="any">No Preference</option>
+                            <option value="Intel">Intel Core</option>
+                            <option value="AMD">AMD Ryzen</option>
+                            <option value="Apple">Apple Silicon</option>
+                        </select>
+                    </div>
+
+                    <!-- ===================== PRO-ONLY FIELDS ===================== -->
+                    <div id="proFields" style="display:none;">
+                        <div class="form-section-title">⚙ Advanced CPU</div>
+
+                        <!-- Intel options -->
+                        <div id="intelOptions" style="display:none;" class="form-row">
+                            <div class="form-group">
+                                <label for="cpuTier">Intel Tier</label>
+                                <select id="cpuTierIntel" class="form-control" onchange="syncCpuTier(); updateSnapshot();">
+                                    <option value="any">Any</option>
+                                    <option value="i3">Core i3</option>
+                                    <option value="i5">Core i5</option>
+                                    <option value="i7">Core i7</option>
+                                    <option value="i9">Core i9</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="cpuGenIntel">Generation</label>
+                                <select id="cpuGenIntel" class="form-control" onchange="syncCpuGen(); updateSnapshot();">
+                                    <option value="any">Any</option>
+                                    <option value="11th Gen">11th Gen</option>
+                                    <option value="12th Gen">12th Gen</option>
+                                    <option value="13th Gen">13th Gen</option>
+                                    <option value="14th Gen">14th Gen</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- AMD options -->
+                        <div id="amdOptions" style="display:none;" class="form-row">
+                            <div class="form-group">
+                                <label>AMD Tier</label>
+                                <select id="cpuTierAmd" class="form-control" onchange="syncCpuTier(); updateSnapshot();">
+                                    <option value="any">Any</option>
+                                    <option value="Ryzen 3">Ryzen 3</option>
+                                    <option value="Ryzen 5">Ryzen 5</option>
+                                    <option value="Ryzen 7">Ryzen 7</option>
+                                    <option value="Ryzen 9">Ryzen 9</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Architecture</label>
+                                <select id="cpuGenAmd" class="form-control" onchange="syncCpuGen(); updateSnapshot();">
+                                    <option value="any">Any</option>
+                                    <option value="Zen 2">Zen 2</option>
+                                    <option value="Zen 3">Zen 3</option>
+                                    <option value="Zen 3+">Zen 3+</option>
+                                    <option value="Zen 4">Zen 4</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Apple options -->
+                        <div id="appleOptions" style="display:none;" class="form-row">
+                            <div class="form-group">
+                                <label>Apple Chip</label>
+                                <select id="cpuTierApple" class="form-control" onchange="syncCpuTier(); updateSnapshot();">
+                                    <option value="any">Any</option>
+                                    <option value="M1">M1</option>
+                                    <option value="M2">M2</option>
+                                    <option value="M3">M3</option>
+                                    <option value="M3 Pro">M3 Pro</option>
+                                    <option value="M3 Max">M3 Max</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>&nbsp;</label>
+                                <input type="text" class="form-control" value="M-Series" disabled>
+                            </div>
+                        </div>
+
+                        <!-- Hidden fields to submit to backend -->
+                        <input type="hidden" name="cpuTier" id="cpuTierHidden" value="any">
+                        <input type="hidden" name="cpuGeneration" id="cpuGenHidden" value="any">
+
+                        <div class="form-section-title">🎮 GPU & Storage</div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="gpuPreference">GPU Class</label>
+                                <select id="gpuPreference" name="gpuPreference" class="form-control" onchange="updateSnapshot()">
+                                    <option value="any">No Preference</option>
+                                    <option value="integrated">Integrated (Office)</option>
+                                    <option value="entry">Entry Gaming (GTX)</option>
+                                    <option value="mid">Mid Gaming (RTX 3050-4050)</option>
+                                    <option value="high">High Gaming (RTX 4060+)</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="storageCapacity">Storage</label>
+                                <select id="storageCapacity" name="storageCapacity" class="form-control" onchange="updateSnapshot()">
+                                    <option value="any">No Preference</option>
+                                    <option value="256GB">256 GB</option>
+                                    <option value="512GB">512 GB</option>
+                                    <option value="1TB">1 TB</option>
+                                    <option value="2TB">2 TB</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-section-title">🖥 Display Details</div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="resolution">Resolution</label>
+                                <select id="resolution" name="resolution" class="form-control" onchange="updateSnapshot()">
+                                    <option value="any">No Preference</option>
+                                    <option value="FHD">FHD (1080p)</option>
+                                    <option value="QHD">QHD (1440p)</option>
+                                    <option value="4K">4K (2160p)</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="refreshRate">Min Refresh Rate</label>
+                                <select id="refreshRate" name="refreshRate" class="form-control" onchange="updateSnapshot()">
+                                    <option value="0">No Preference</option>
+                                    <option value="60">60 Hz</option>
+                                    <option value="90">90 Hz+</option>
+                                    <option value="120">120 Hz+</option>
+                                    <option value="144">144 Hz+</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-section-title">🔌 Ports & Connectivity</div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="minUsbA">Min USB-A Ports</label>
+                                <select id="minUsbA" name="minUsbA" class="form-control" onchange="updateSnapshot()">
+                                    <option value="0">Not Important</option>
+                                    <option value="1">At least 1</option>
+                                    <option value="2">At least 2</option>
+                                    <option value="3">At least 3</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="minUsbC">Min USB-C / TB Ports</label>
+                                <select id="minUsbC" name="minUsbC" class="form-control" onchange="updateSnapshot()">
+                                    <option value="0">Not Important</option>
+                                    <option value="1">At least 1</option>
+                                    <option value="2">At least 2</option>
+                                    <option value="3">At least 3</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-check">
+                                <input type="checkbox" id="hdmiRequired" name="hdmiRequired" value="true" onchange="updateSnapshot()">
+                                <label for="hdmiRequired">HDMI Port Required</label>
+                            </div>
+                            <div class="form-check">
+                                <input type="checkbox" id="sdCardRequired" name="sdCardRequired" value="true" onchange="updateSnapshot()">
+                                <label for="sdCardRequired">SD Card Slot Required</label>
+                            </div>
+                        </div>
+
+                        <div class="form-section-title">🔊 Build & Ergonomics</div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="speakerQuality">Speaker Quality</label>
+                                <select id="speakerQuality" name="speakerQuality" class="form-control" onchange="updateSnapshot()">
+                                    <option value="any">No Preference</option>
+                                    <option value="Basic">Basic</option>
+                                    <option value="Good">Good</option>
+                                    <option value="Premium">Premium (Harman/6-Speaker)</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="buildMaterial">Build Material</label>
+                                <select id="buildMaterial" name="buildMaterial" class="form-control" onchange="updateSnapshot()">
+                                    <option value="any">No Preference</option>
+                                    <option value="Plastic">Plastic</option>
+                                    <option value="Aluminum">Aluminum</option>
+                                    <option value="Magnesium">Magnesium Alloy</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="weightPreference">Weight Class</label>
+                                <select id="weightPreference" name="weightPreference" class="form-control" onchange="updateSnapshot()">
+                                    <option value="any">No Preference</option>
+                                    <option value="ultralight">Ultralight (&lt; 1.5 kg)</option>
+                                    <option value="medium">Medium (1.5 – 2 kg)</option>
+                                    <option value="heavy">Heavy (&gt; 2 kg)</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="batteryPreference">Min Battery Life</label>
+                                <select id="batteryPreference" name="batteryPreference" class="form-control" onchange="updateSnapshot()">
+                                    <option value="any">No Preference</option>
+                                    <option value="8">8+ Hours</option>
+                                    <option value="12">12+ Hours</option>
+                                    <option value="15">15+ Hours</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- End Pro Fields -->
+
+                    <button type="submit" class="btn" id="submitBtn">Get Recommendations</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Snapshot Panel -->
+        <div class="snapshot-section glass-card" id="snapshotPanel">
+            <h3 id="snapshotTitle">Your Config</h3>
+            <div class="snapshot-content" id="snapshotContent">
+                <div class="snapshot-item"><div class="snapshot-label">Budget</div><div class="snapshot-value" id="snap-budget">Not Set</div></div>
+                <div class="snapshot-item"><div class="snapshot-label">RAM</div><div class="snapshot-value" id="snap-ram">8 GB</div></div>
+                <div class="snapshot-item"><div class="snapshot-label">Purpose</div><div class="snapshot-value" id="snap-purpose">Student</div></div>
+                <div class="snapshot-item"><div class="snapshot-label">Display</div><div class="snapshot-value" id="snap-display">Any</div></div>
+                <div class="snapshot-item"><div class="snapshot-label">Chipset</div><div class="snapshot-value" id="snap-chipset">Any</div></div>
+                <!-- Pro-only snapshot items -->
+                <div id="proSnapshotItems" style="display:none;">
+                    <div class="snapshot-item"><div class="snapshot-label">CPU</div><div class="snapshot-value" id="snap-cpu">Any</div></div>
+                    <div class="snapshot-item"><div class="snapshot-label">GPU</div><div class="snapshot-value" id="snap-gpu">Any</div></div>
+                    <div class="snapshot-item"><div class="snapshot-label">Storage</div><div class="snapshot-value" id="snap-storage">Any</div></div>
+                    <div class="snapshot-item"><div class="snapshot-label">Ports</div><div class="snapshot-value" id="snap-ports">Any</div></div>
+                    <div class="snapshot-item"><div class="snapshot-label">Build</div><div class="snapshot-value" id="snap-build">Any</div></div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- Page Footer -->
+<div class="page-footer">
+    <p>Want to explore before filtering?</p>
+    <a th:href="@{/catalog}" class="btn btn-outline btn-footer">
+        📋 Browse All
+    </a>
+</div>
+<!-- ============================================================
+     SCRIPTS
+     ============================================================ -->
+<script>
+    let currentMode = 'basic';
+
+    function selectMode(mode) {
+        currentMode = mode;
+        document.getElementById('modeInput').value = mode;
+        document.getElementById('welcomeScreen').classList.add('hidden');
+        document.getElementById('mainContent').style.display = 'block';
+
+        if (mode === 'pro') {
+            document.getElementById('appBody').classList.add('pro-mode');
+            document.getElementById('proFields').style.display = 'block';
+            document.getElementById('proSnapshotItems').style.display = 'block';
+            document.getElementById('pageTitle').textContent = '>_ Pro Mode';
+            document.getElementById('pageSubtitle').textContent = 'Granular hardware filtering for power users.';
+            startBinaryRain();
+        } else {
+            document.getElementById('appBody').classList.remove('pro-mode');
+            document.getElementById('proFields').style.display = 'none';
+            document.getElementById('proSnapshotItems').style.display = 'none';
+            document.getElementById('pageTitle').textContent = 'Find Your Perfect Build';
+            document.getElementById('pageSubtitle').textContent = 'Smart recommendations based on your preferences.';
+        }
+        updateSnapshot();
+    }
+
+    function onChipsetChange() {
+        const v = document.getElementById('chipset').value;
+        document.getElementById('intelOptions').style.display = (v === 'Intel' && currentMode === 'pro') ? 'grid' : 'none';
+        document.getElementById('amdOptions').style.display = (v === 'AMD' && currentMode === 'pro') ? 'grid' : 'none';
+        document.getElementById('appleOptions').style.display = (v === 'Apple' && currentMode === 'pro') ? 'grid' : 'none';
+        syncCpuTier(); syncCpuGen();
+    }
+
+    function syncCpuTier() {
+        const chip = document.getElementById('chipset').value;
+        let val = 'any';
+        if (chip === 'Intel') val = document.getElementById('cpuTierIntel').value;
+        if (chip === 'AMD') val = document.getElementById('cpuTierAmd').value;
+        if (chip === 'Apple') val = document.getElementById('cpuTierApple').value;
+        document.getElementById('cpuTierHidden').value = val;
+    }
+
+    function syncCpuGen() {
+        const chip = document.getElementById('chipset').value;
+        let val = 'any';
+        if (chip === 'Intel') val = document.getElementById('cpuGenIntel').value;
+        if (chip === 'AMD') val = document.getElementById('cpuGenAmd').value;
+        if (chip === 'Apple') val = 'M-Series';
+        document.getElementById('cpuGenHidden').value = val;
+    }
+
+    function updateSnapshot() {
+        const bv = document.getElementById('budget').value;
+        document.getElementById('snap-budget').innerText = bv ? '₹' + parseInt(bv).toLocaleString('en-IN') : 'Not Set';
+
+        const rs = document.getElementById('ram');
+        document.getElementById('snap-ram').innerText = rs.options[rs.selectedIndex].text;
+
+        const ps = document.getElementById('purpose');
+        document.getElementById('snap-purpose').innerText = ps.options[ps.selectedIndex].text.split('/')[0].trim();
+
+        const ds = document.getElementById('displaySize');
+        const dt = document.getElementById('displayType');
+        let dispText = '';
+        dispText += (ds.value === 'any') ? 'Any size' : ds.options[ds.selectedIndex].text.split('(')[0].trim();
+        dispText += ' · ';
+        dispText += (dt.value === 'any') ? 'Any type' : dt.options[dt.selectedIndex].text.split('(')[0].trim();
+        document.getElementById('snap-display').innerText = dispText;
+
+        const cs = document.getElementById('chipset');
+        document.getElementById('snap-chipset').innerText = cs.value === 'any' ? 'Any' : cs.options[cs.selectedIndex].text;
+
+        // Pro-only
+        if (currentMode === 'pro') {
+            const tier = document.getElementById('cpuTierHidden').value;
+            const gen = document.getElementById('cpuGenHidden').value;
+            document.getElementById('snap-cpu').innerText = (tier === 'any' ? 'Any tier' : tier) + ' · ' + (gen === 'any' ? 'Any gen' : gen);
+
+            const gpu = document.getElementById('gpuPreference');
+            document.getElementById('snap-gpu').innerText = gpu.value === 'any' ? 'Any' : gpu.options[gpu.selectedIndex].text.split('(')[0].trim();
+
+            const stor = document.getElementById('storageCapacity');
+            document.getElementById('snap-storage').innerText = stor.value === 'any' ? 'Any' : stor.options[stor.selectedIndex].text;
+
+            const usbA = document.getElementById('minUsbA').value;
+            const usbC = document.getElementById('minUsbC').value;
+            const hdmi = document.getElementById('hdmiRequired').checked;
+            const sd = document.getElementById('sdCardRequired').checked;
+            let portStr = '';
+            if (usbA > 0) portStr += usbA + ' USB-A ';
+            if (usbC > 0) portStr += usbC + ' USB-C ';
+            if (hdmi) portStr += 'HDMI ';
+            if (sd) portStr += 'SD ';
+            document.getElementById('snap-ports').innerText = portStr || 'Any';
+
+            const bm = document.getElementById('buildMaterial');
+            const wt = document.getElementById('weightPreference');
+            let buildStr = (bm.value === 'any' ? 'Any material' : bm.options[bm.selectedIndex].text);
+            buildStr += ' · ' + (wt.value === 'any' ? 'Any weight' : wt.options[wt.selectedIndex].text);
+            document.getElementById('snap-build').innerText = buildStr;
+        }
+    }
+
+    // ============================================================
+    //  BINARY RAIN ANIMATION
+    // ============================================================
+    function startBinaryRain() {
+        const canvas = document.getElementById('binary-rain');
+        const ctx = canvas.getContext('2d');
+
+        function resize() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        resize();
+        window.addEventListener('resize', resize);
+
+        const fontSize = 14;
+        const columns = Math.floor(canvas.width / fontSize);
+        const drops = Array(columns).fill(1);
+
+        function draw() {
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            ctx.fillStyle = '#00ff00';
+            ctx.font = fontSize + 'px "Share Tech Mono", monospace';
+
+            for (let i = 0; i < drops.length; i++) {
+                const text = Math.random() > 0.5 ? '1' : '0';
+                ctx.globalAlpha = 0.15 + Math.random() * 0.3;
+                ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+
+                if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
+                    drops[i] = 0;
+                }
+                drops[i]++;
+            }
+            ctx.globalAlpha = 1;
+            requestAnimationFrame(draw);
+        }
+        draw();
+    }
+
+    window.onload = function() {
+        updateSnapshot();
+        // Restore dark mode from localStorage
+        if (localStorage.getItem('darkMode') === 'true') {
+            document.body.classList.add('dark-mode');
+            document.getElementById('darkToggle').textContent = '🌙';
+        }
+    };
+
+    function toggleDarkMode() {
+        const body = document.body;
+        body.classList.toggle('dark-mode');
+        const isDark = body.classList.contains('dark-mode');
+        localStorage.setItem('darkMode', isDark);
+        document.getElementById('darkToggle').textContent = isDark ? '🌙' : '☀️';
+    }
+
+    function applyPreset(preset) {
+        const presets = {
+            gaming:    { budget: 100000, ram: '16', purpose: 'gaming', displaySize: '15-16', displayType: 'any', chipset: 'any' },
+            student:   { budget: 40000,  ram: '8',  purpose: 'student', displaySize: 'any',   displayType: 'any', chipset: 'any' },
+            creative:  { budget: 150000, ram: '32', purpose: 'creative', displaySize: 'any',  displayType: 'OLED/Mini-LED', chipset: 'any' },
+            developer: { budget: 80000,  ram: '16', purpose: 'student', displaySize: '15-16', displayType: 'any', chipset: 'Intel' }
+        };
+        const p = presets[preset];
+        if (!p) return;
+
+        document.getElementById('budget').value = p.budget;
+        document.getElementById('ram').value = p.ram;
+        document.getElementById('purpose').value = p.purpose;
+        document.getElementById('displaySize').value = p.displaySize;
+        document.getElementById('displayType').value = p.displayType;
+        document.getElementById('chipset').value = p.chipset;
+        onChipsetChange();
+        updateSnapshot();
+
+        // Flash the preset card
+        document.getElementById('submitBtn').scrollIntoView({ behavior: 'smooth' });
+    }
+</script>
+</body>
+</html>

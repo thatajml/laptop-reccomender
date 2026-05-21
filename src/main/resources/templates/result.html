@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your Recommendations</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body th:classappend="${mode == 'pro'} ? 'pro-mode' : ''">
+
+<canvas id="binary-rain"></canvas>
+
+<!-- Dark Mode Toggle -->
+<div class="dark-toggle" id="darkToggle" onclick="toggleDarkMode()">☀️</div>
+
+    <div class="container" style="position:relative;">
+        <div style="position: absolute; top: 0rem; left: 0rem; z-index: 10; display: flex; flex-direction: column; gap: 0.5rem;">
+            <a th:href="@{/}" class="btn btn-outline" style="width: auto; padding: 0.5rem 1rem; text-decoration: none; font-weight: bold; border-radius: 8px;">⌂ Home</a>
+            <a href="javascript:history.back()" class="btn btn-outline" style="width: auto; padding: 0.5rem 1rem; text-decoration: none; font-weight: bold; border-radius: 8px;">← Back</a>
+        </div>
+
+        <div class="header" style="padding-top: 1.5rem;">
+            <h1 th:text="${mode == 'pro'} ? '>_ Results' : 'Top Recommendations'">Top Recommendations</h1>
+            <p th:if="${!noResults}">Based on your requirements, here are the best fits.</p>
+        </div>
+
+        <!-- ============================================================
+             NO RESULTS POPUP
+             ============================================================ -->
+        <div th:if="${noResults}" id="noResultsPopup" class="glass-card" style="text-align:center; padding:3rem 2rem; max-width:640px; margin:2rem auto;">
+            <div style="font-size:5rem; margin-bottom:1rem;">🦄</div>
+            <h2 style="margin-bottom:0.5rem;">This Dream Laptop Doesn't Exist... Yet!</h2>
+            <p style="color:var(--text-secondary); font-size:1.1rem; line-height:1.6; margin-bottom:2rem;">
+                We searched through <strong>100+ laptops</strong> in the Indian market and couldn't find
+                a single one that matches <em>all</em> your requirements.<br><br>
+                Maybe you're from the future? 🚀 Here's what you can do:
+            </p>
+
+            <div style="display:flex; flex-direction:column; gap:1rem; align-items:center; margin-bottom:2rem;">
+                <a href="mailto:feedback@intel.com?subject=Hey Intel, I need a laptop with these specs!&body=Dear Intel, please make a laptop that matches my exact needs. Thanks! 😤"
+                   class="btn" style="width:auto; padding:0.8rem 2rem; text-decoration:none; font-size:0.95rem;">
+                    ✉️ Write an Angry Email to Your Favourite Manufacturer
+                </a>
+                <a href="https://www.amazon.in/s?k=PC+components+combo" target="_blank"
+                   class="btn btn-outline" style="width:auto; padding:0.8rem 2rem; text-decoration:none; font-size:0.95rem;">
+                    🔧 Just Build a PC — Buy Compatible Parts
+                </a>
+            </div>
+
+            <p style="font-size:0.9rem; color:var(--text-secondary); opacity:0.7;">
+                💡 <strong>Tip:</strong> Try relaxing some filters — loosen your budget, pick "No Preference" on a few specs,
+                or change the chipset. Your perfect laptop might be hiding behind one strict filter!
+            </p>
+
+            <div style="margin-top:2rem;">
+                <a th:href="@{/}" class="btn btn-outline" style="text-decoration:none; width:auto; padding:0.8rem 2rem;">← Modify Search</a>
+            </div>
+        </div>
+
+        <div th:if="${!noResults}" class="results-grid">
+            <div th:each="laptop, iterStat : ${laptops}" class="glass-card result-card">
+
+                <h3 th:text="${laptop.title}">Laptop Title</h3>
+                <img th:src="'https://tse1.mm.bing.net/th?q=' + ${laptop.title} + ' laptop'"
+                     alt="Laptop Image"
+                     th:data-fallback="${laptop.thumbnail}"
+                     onerror="this.onerror=null; this.src=this.getAttribute('data-fallback');">
+
+                <div class="price-tag">
+                    <span th:text="'₹' + ${#numbers.formatDecimal(laptop.price, 1, 0)}">₹0</span>
+                    <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+                        <a th:href="'https://www.youtube.com/results?search_query=' + ${laptop.title} + ' review'" target="_blank" class="btn btn-outline" style="text-decoration:none; width:auto; padding:0.5rem 0.8rem; font-size: 0.85rem; border-color:#ff0000; color:#ff0000;">▶ Review</a>
+                        <a th:href="'https://www.amazon.in/s?k=' + ${laptop.title}" target="_blank" class="btn btn-buy" style="text-decoration:none;">Amazon</a>
+                    </div>
+                </div>
+
+                <div style="margin-bottom: 0.6rem;">
+                    <span th:each="reason : ${laptop.reasons}" class="reason-tag" th:text="${reason}">Reason</span>
+                </div>
+
+                <!-- Why This Laptop -->
+                <div class="why-callout" th:if="${laptop.whyThisLaptop}">
+                    💡 <span th:text="${laptop.whyThisLaptop}">Summary</span>
+                </div>
+
+                <!-- Benchmark Badges -->
+                <div class="benchmark-row">
+                    <span class="bench-badge">📈 GB5s: <span th:text="${laptop.geekbenchSingle}">0</span></span>
+                    <span class="bench-badge">📈 GB5m: <span th:text="${laptop.geekbenchMulti}">0</span></span>
+                    <span class="bench-badge">🎬 CB: <span th:text="${laptop.cinebenchScore}">0</span></span>
+                </div>
+
+                <!-- Basic spec list -->
+                <ul class="spec-list" th:if="${mode != 'pro'}">
+                    <li th:text="'Score: ' + ${#numbers.formatDecimal(laptop.score, 1, 1)}">Score</li>
+                    <li th:text="'Rating: ' + ${laptop.rating} + '/5'">Rating</li>
+                    <li th:text="'Display: ' + ${laptop.displaySize} + '&quot; ' + ${laptop.displayType}">Display</li>
+                    <li th:text="'RAM: ' + ${laptop.ramGB} + ' GB'">RAM</li>
+                    <li th:text="'CPU: ' + ${laptop.cpu}">CPU</li>
+                    <li th:text="'GPU: ' + ${laptop.gpu}">GPU</li>
+                </ul>
+
+                <!-- Pro mode detailed spec grid -->
+                <div th:if="${mode == 'pro'}" class="spec-grid">
+                    <div class="spec-grid-item">
+                        <span class="spec-grid-label">Score</span>
+                        <span class="spec-grid-value" th:text="${#numbers.formatDecimal(laptop.score, 1, 1)}">0</span>
+                    </div>
+                    <div class="spec-grid-item">
+                        <span class="spec-grid-label">Rating</span>
+                        <span class="spec-grid-value" th:text="${laptop.rating} + '/5 ⭐'">0</span>
+                    </div>
+                    <div class="spec-grid-item">
+                        <span class="spec-grid-label">CPU</span>
+                        <span class="spec-grid-value" th:text="${laptop.cpu}">—</span>
+                    </div>
+                    <div class="spec-grid-item">
+                        <span class="spec-grid-label">CPU Tier / Gen</span>
+                        <span class="spec-grid-value" th:text="${laptop.cpuTier} + ' · ' + ${laptop.cpuGeneration}">—</span>
+                    </div>
+                    <div class="spec-grid-item">
+                        <span class="spec-grid-label">GPU</span>
+                        <span class="spec-grid-value" th:text="${laptop.gpu}">—</span>
+                    </div>
+                    <div class="spec-grid-item">
+                        <span class="spec-grid-label">RAM</span>
+                        <span class="spec-grid-value" th:text="${laptop.ramGB} + ' GB'">—</span>
+                    </div>
+                    <div class="spec-grid-item">
+                        <span class="spec-grid-label">Storage</span>
+                        <span class="spec-grid-value" th:text="${laptop.storageCapacity}">—</span>
+                    </div>
+                    <div class="spec-grid-item">
+                        <span class="spec-grid-label">Display</span>
+                        <span class="spec-grid-value" th:text="${laptop.displaySize} + '&quot; ' + ${laptop.displayType}">—</span>
+                    </div>
+                    <div class="spec-grid-item">
+                        <span class="spec-grid-label">Resolution</span>
+                        <span class="spec-grid-value" th:text="${laptop.resolution}">—</span>
+                    </div>
+                    <div class="spec-grid-item">
+                        <span class="spec-grid-label">Refresh Rate</span>
+                        <span class="spec-grid-value" th:text="${laptop.refreshRate} + ' Hz'">—</span>
+                    </div>
+                    <div class="spec-grid-item">
+                        <span class="spec-grid-label">Ports</span>
+                        <span class="spec-grid-value" th:text="${laptop.usbACount} + ' USB-A · ' + ${laptop.usbCCount} + ' USB-C' + (${laptop.hdmiPort} ? ' · HDMI' : '') + (${laptop.sdCardSlot} ? ' · SD' : '')">—</span>
+                    </div>
+                    <div class="spec-grid-item">
+                        <span class="spec-grid-label">Speakers</span>
+                        <span class="spec-grid-value" th:text="${laptop.speakerQuality}">—</span>
+                    </div>
+                    <div class="spec-grid-item">
+                        <span class="spec-grid-label">Build</span>
+                        <span class="spec-grid-value" th:text="${laptop.buildMaterial}">—</span>
+                    </div>
+                    <div class="spec-grid-item">
+                        <span class="spec-grid-label">Weight</span>
+                        <span class="spec-grid-value" th:text="${laptop.weight} + ' kg'">—</span>
+                    </div>
+                    <div class="spec-grid-item">
+                        <span class="spec-grid-label">Battery</span>
+                        <span class="spec-grid-value" th:text="${laptop.batteryLife} + ' hours'">—</span>
+                    </div>
+                </div>
+
+                <div class="pc-comparison">
+                    <h4>Equivalent PC Build</h4>
+                    <div th:if="${pcBuilds[iterStat.index].apple}">
+                        <p style="font-size:0.9rem; color:var(--text-secondary); margin-top:1rem; line-height:1.5;">
+                            Custom build is not possible for Apple Silicon laptops due to proprietary M-series architecture.
+                        </p>
+                    </div>
+                    <div th:if="${!pcBuilds[iterStat.index].apple && !pcBuilds[iterStat.index].similarMatch}">
+                        <p style="font-size:0.9rem; color:var(--text-secondary); margin-top:1rem; line-height:1.5;">
+                            No similar PC specs available for direct comparison (typical for integrated or ultra-low-power builds).
+                        </p>
+                    </div>
+                    <div th:if="${pcBuilds[iterStat.index].similarMatch && !pcBuilds[iterStat.index].apple}">
+                        <p style="font-size:0.82rem; color:var(--text-secondary); margin-top:-0.5rem; margin-bottom:1rem;">Click parts to check prices on Amazon</p>
+                        <ul class="spec-list">
+                            <li>CPU: <a th:href="'https://www.amazon.in/s?k=' + ${pcBuilds[iterStat.index].cpu}" target="_blank" class="part-link" th:text="' ' + ${pcBuilds[iterStat.index].cpu}">CPU</a></li>
+                            <li>GPU: <a th:href="'https://www.amazon.in/s?k=' + ${pcBuilds[iterStat.index].gpu}" target="_blank" class="part-link" th:text="' ' + ${pcBuilds[iterStat.index].gpu}">GPU</a></li>
+                            <li>RAM: <a th:href="'https://www.amazon.in/s?k=' + ${pcBuilds[iterStat.index].ram}" target="_blank" class="part-link" th:text="' ' + ${pcBuilds[iterStat.index].ram}">RAM</a></li>
+                            <li>Mobo: <a th:href="'https://www.amazon.in/s?k=' + ${pcBuilds[iterStat.index].motherboard}" target="_blank" class="part-link" th:text="' ' + ${pcBuilds[iterStat.index].motherboard}">Mobo</a></li>
+                            <li>Total: <span th:text="' ₹' + ${#numbers.formatDecimal(pcBuilds[iterStat.index].totalPrice, 1, 0)}" style="font-weight:600;">₹0</span></li>
+                        </ul>
+                        <div style="margin-top: 10px; font-weight: 500;">
+                            <span th:if="${pcBuilds[iterStat.index].priceDifference > 0}" style="color: var(--success);"
+                                  th:text="'PC is ₹' + ${#numbers.formatDecimal(pcBuilds[iterStat.index].priceDifference, 1, 0)} + ' cheaper'">Cheaper</span>
+                            <span th:if="${pcBuilds[iterStat.index].priceDifference <= 0}" style="color: var(--danger);"
+                                  th:text="'Laptop is ₹' + ${#numbers.formatDecimal(-pcBuilds[iterStat.index].priceDifference, 1, 0)} + ' cheaper'">Cheaper</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Radar Chart -->
+                <div class="radar-container">
+                    <canvas th:id="'radar-' + ${iterStat.index}" width="260" height="260"></canvas>
+                </div>
+
+                <!-- Compare Checkbox -->
+                <label class="compare-check">
+                    <input type="checkbox" class="compare-cb" th:value="${laptop.id}" onchange="updateCompareBtn()">
+                    Add to compare
+                </label>
+            </div>
+        </div>
+
+        <!-- Compare Action Block -->
+        <div id="compareActionBlock" class="compare-action-block">
+            <a class="btn btn-outline compare-btn-inline" href="#" onclick="goCompare(); return false;">⚖️ Compare Selected Laptops</a>
+            <p style="font-size:0.85rem; color:var(--text-secondary); margin-top:0.5rem;">Select at least 2 laptops from the results above.</p>
+        </div>
+
+        <!-- Chart -->
+        <div th:if="${!noResults && !titles.isEmpty()}" class="glass-card chart-container">
+            <h2 style="text-align:center; margin-bottom:2rem;">Cost Comparison: Laptop vs PC Build</h2>
+            <canvas id="comparisonChart" width="400" height="150"></canvas>
+        </div>
+
+        <!-- Tabular View for Affordable Laptops -->
+        <div th:if="${!affordableLaptops.isEmpty()}" class="glass-card" style="margin-top: 2rem; overflow-x: auto;">
+            <h2 style="text-align:center; margin-bottom:1.5rem;">You may want to check out</h2>
+            <table class="catalog-table" style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.9rem;">
+                <thead>
+                    <tr style="border-bottom: 2px solid var(--accent);">
+                        <th style="padding: 1rem;">Laptop</th>
+                        <th style="padding: 1rem;">Price (₹)</th>
+                        <th style="padding: 1rem;">CPU</th>
+                        <th style="padding: 1rem;">GPU</th>
+                        <th style="padding: 1rem;">RAM / Storage</th>
+                        <th style="padding: 1rem;">Buy</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="laptop : ${affordableLaptops}" style="border-bottom: 1px solid rgba(128,128,128,0.2);">
+                        <td th:text="${laptop.title}" style="padding: 1rem; font-weight:600; color:var(--text-primary); min-width: 180px;"></td>
+                        <td th:text="'₹' + ${#numbers.formatDecimal(laptop.price, 1, 0)}" style="padding: 1rem; font-weight:600;"></td>
+                        <td th:text="${laptop.cpuTier} + ' ' + ${laptop.cpuGeneration}" style="padding: 1rem; color:var(--text-secondary);"></td>
+                        <td th:text="${laptop.gpuModel}" style="padding: 1rem; color:var(--text-secondary);"></td>
+                        <td th:text="${laptop.ramGB} + 'GB / ' + ${laptop.storageCapacity}" style="padding: 1rem; color:var(--text-secondary);"></td>
+                        <td style="padding: 1rem; display: flex; gap: 0.8rem; flex-wrap: wrap;">
+                            <a th:href="'https://www.amazon.in/s?k=' + ${laptop.title}" target="_blank" style="color:var(--accent); text-decoration:none; font-weight: bold;">Amazon →</a>
+                            <a th:href="'https://www.youtube.com/results?search_query=' + ${laptop.title} + ' review'" target="_blank" style="color:#ff0000; text-decoration:none; font-weight: bold;">Review ▶</a>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div th:if="${!noResults}" style="text-align:center; margin: 3rem 0;">
+            <a th:href="@{/}" class="btn btn-outline" style="text-decoration:none;">← Search Again</a>
+        </div>
+    </div>
+
+    <!-- Chart data -->
+    <script th:inline="javascript">
+        /*<![CDATA[*/
+        // Dark mode init
+        if (localStorage.getItem('darkMode') === 'true') {
+            document.body.classList.add('dark-mode');
+            const darkToggleEl = document.getElementById('darkToggle');
+            if(darkToggleEl) darkToggleEl.textContent = '🌙';
+        }
+        let isDarkInitial = document.body.classList.contains('dark-mode');
+
+        const mode = /*[[${mode}]]*/ 'basic';
+        const titles = /*[[${titles}]]*/ [];
+        const laptopPrices = /*[[${lPrices}]]*/ [];
+        const pcPrices = /*[[${pPrices}]]*/ [];
+
+        const isPro = mode === 'pro';
+        const barColor1 = isPro ? (isDarkInitial ? 'rgba(255,255,255,0.8)' : 'rgba(0,0,0,0.8)') : 'rgba(0,113,227,0.8)';
+        const barBorder1 = isPro ? (isDarkInitial ? '#ffffff' : '#000000') : 'rgba(0,113,227,1)';
+        const barColor2 = isPro ? (isDarkInitial ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)') : 'rgba(52,199,89,0.8)';
+        const barBorder2 = isPro ? (isDarkInitial ? '#aaaaaa' : '#555555') : 'rgba(52,199,89,1)';
+        
+        let textColor = isPro ? (isDarkInitial ? '#ffffff' : '#000000') : (isDarkInitial ? '#ffffff' : '#000000');
+        let gridColor = isPro ? (isDarkInitial ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.1)') : (isDarkInitial ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.08)');
+
+        let mainBarChart = null;
+        let allRadarCharts = [];
+
+        // Bar chart
+        const chartEl = document.getElementById('comparisonChart');
+        if (chartEl) {
+            const ctx = chartEl.getContext('2d');
+            mainBarChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: titles,
+                    datasets: [
+                        { label: 'Laptop Price (₹)', data: laptopPrices, backgroundColor: barColor1, borderColor: barBorder1, borderWidth: 1 },
+                        { label: 'PC Build Price (₹)', data: pcPrices, backgroundColor: barColor2, borderColor: barBorder2, borderWidth: 1 }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { labels: { color: textColor, font: { family: 'Inter' } } } },
+                    scales: {
+                        y: { beginAtZero: true, grid: { color: gridColor }, ticks: { color: textColor } },
+                        x: { grid: { display: false }, ticks: { color: textColor } }
+                    }
+                }
+            });
+        }
+
+        // ============================================================
+        //  RADAR CHARTS — per card
+        // ============================================================
+        const radarData = /*[[${laptops}]]*/ [];
+        const radarColor = isPro ? (isDarkInitial ? 'rgba(255,255,255,' : 'rgba(0,0,0,') : 'rgba(0,113,227,';
+
+        radarData.forEach(function(laptop, i) {
+            const el = document.getElementById('radar-' + i);
+            if (el) {
+                let rChart = new Chart(el.getContext('2d'), {
+                    type: 'radar',
+                    data: {
+                        labels: ['Performance', 'Display', 'Portability', 'Build', 'Battery'],
+                        datasets: [{
+                            label: laptop.title,
+                            data: [laptop.perfScore, laptop.displayScore, laptop.portabilityScore, laptop.buildScore, laptop.batteryScore],
+                            fill: true,
+                            backgroundColor: radarColor + '0.15)',
+                            borderColor: radarColor + '0.8)',
+                            borderWidth: 2,
+                            pointBackgroundColor: radarColor + '1)',
+                            pointRadius: 3
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: true,
+                        scales: {
+                            r: {
+                                beginAtZero: true,
+                                max: 100,
+                                ticks: { display: false },
+                                grid: { color: gridColor },
+                                pointLabels: { color: textColor, font: { size: 10, family: 'Inter' } }
+                            }
+                        },
+                        plugins: { legend: { display: false } }
+                    }
+                });
+                allRadarCharts.push(rChart);
+            }
+        });
+
+        // ============================================================
+        //  COMPARE LOGIC
+        // ============================================================
+        function updateCompareBtn() {
+            const checked = document.querySelectorAll('.compare-cb:checked');
+            const block = document.getElementById('compareActionBlock');
+            if (block) block.style.display = checked.length >= 2 ? 'block' : 'none';
+        }
+
+        function goCompare() {
+            const checked = document.querySelectorAll('.compare-cb:checked');
+            const ids = Array.from(checked).map(cb => cb.value);
+            if (ids.length < 2) { alert('Select at least 2 laptops to compare.'); return; }
+            window.location.href = '/compare?ids=' + ids.join('&ids=') + '&mode=' + mode;
+        }
+
+        // ============================================================
+        //  DARK MODE
+        // ============================================================
+        function updateAllCharts() {
+            const isDarkNow = document.body.classList.contains('dark-mode');
+            let tColor = isPro ? (isDarkNow ? '#ffffff' : '#000000') : (isDarkNow ? '#ffffff' : '#000000');
+            let gColor = isPro ? (isDarkNow ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.1)') : (isDarkNow ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.08)');
+
+            if(mainBarChart) {
+                mainBarChart.options.plugins.legend.labels.color = tColor;
+                mainBarChart.options.scales.x.ticks.color = tColor;
+                mainBarChart.options.scales.y.ticks.color = tColor;
+                mainBarChart.options.scales.y.grid.color = gColor;
+                mainBarChart.update();
+            }
+
+            allRadarCharts.forEach(c => {
+                c.options.scales.r.grid.color = gColor;
+                c.options.scales.r.pointLabels.color = tColor;
+                c.update();
+            });
+        }
+
+        function toggleDarkMode() {
+            document.body.classList.toggle('dark-mode');
+            const isDark = document.body.classList.contains('dark-mode');
+            localStorage.setItem('darkMode', isDark);
+            const toggleEl = document.getElementById('darkToggle');
+            if(toggleEl) toggleEl.textContent = isDark ? '🌙' : '☀️';
+            updateAllCharts();
+        }
+
+        // Pro mode binary rain
+        if (isPro) {
+            const canvas = document.getElementById('binary-rain');
+            const rctx = canvas.getContext('2d');
+            function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+            resize(); window.addEventListener('resize', resize);
+            const fs = 14, cols = Math.floor(canvas.width / fs);
+            const drops = Array(cols).fill(1);
+            function draw() {
+                rctx.fillStyle = 'rgba(0,0,0,0.05)';
+                rctx.fillRect(0, 0, canvas.width, canvas.height);
+                rctx.fillStyle = '#00ff00';
+                rctx.font = fs + 'px "Share Tech Mono", monospace';
+                for (let i = 0; i < drops.length; i++) {
+                    rctx.globalAlpha = 0.15 + Math.random() * 0.3;
+                    rctx.fillText(Math.random() > 0.5 ? '1' : '0', i * fs, drops[i] * fs);
+                    if (drops[i] * fs > canvas.height && Math.random() > 0.975) drops[i] = 0;
+                    drops[i]++;
+                }
+                rctx.globalAlpha = 1;
+                requestAnimationFrame(draw);
+            }
+            draw();
+        }
+        /*]]>*/
+    </script>
+</body>
+</html>

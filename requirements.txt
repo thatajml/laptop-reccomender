@@ -1,0 +1,13 @@
+# System Requirements
+Java Development Kit (JDK) 17 or higher
+Internet Connection (required to fetch the DummyJSON API and Maven dependencies)
+
+# Application Dependencies
+# Note: Since this is a Spring Boot (Java) application, the traditional Python `pip` dependencies do not apply. 
+# All required libraries will be automatically downloaded by Maven via the `pom.xml` file when you run the project.
+# Main libraries used:
+org.springframework.boot:spring-boot-starter-webmvc
+org.springframework.boot:spring-boot-starter-thymeleaf
+
+# Build Tool
+Apache Maven (Optional, as the project includes the Maven Wrapper 'mvnw')
