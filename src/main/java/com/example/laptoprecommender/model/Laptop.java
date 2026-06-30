@@ -3,8 +3,15 @@ package com.example.laptoprecommender.model;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.Transient;
+import org.springframework.data.mongodb.core.mapping.Document;
+
+@Document(collection = "laptops")
 public class Laptop {
-    private int id;
+    @Id
+    private String id;
+    private int laptopId;
     private String title;
     private String description;
     private double price;
@@ -37,8 +44,10 @@ public class Laptop {
     private double weight;          // kg
     private double batteryLife;     // hours
 
-    // Recommendation
+    // Recommendation (transient — computed at runtime, not stored in DB)
+    @Transient
     private double score;
+    @Transient
     private List<String> reasons = new ArrayList<>();
 
     // Benchmark scores (auto-derived from CPU tier)
@@ -46,21 +55,30 @@ public class Laptop {
     private int geekbenchMulti;
     private int cinebenchScore;
 
-    // Radar chart normalized scores (0–100)
+    // Radar chart normalized scores (0–100, transient — computed at runtime)
+    @Transient
     private double perfScore;
+    @Transient
     private double displayScore;
+    @Transient
     private double portabilityScore;
+    @Transient
     private double buildScore;
+    @Transient
     private double batteryScore;
 
-    // AI-generated summary
+    // AI-generated summary (transient — computed at runtime)
+    @Transient
     private String whyThisLaptop;
 
     public Laptop() {}
 
     // --- Getters and Setters ---
-    public int getId() { return id; }
-    public void setId(int id) { this.id = id; }
+    public String getId() { return id; }
+    public void setId(String id) { this.id = id; }
+
+    public int getLaptopId() { return laptopId; }
+    public void setLaptopId(int laptopId) { this.laptopId = laptopId; }
 
     public String getTitle() { return title; }
     public void setTitle(String title) { this.title = title; }
