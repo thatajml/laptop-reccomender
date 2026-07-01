@@ -92,7 +92,7 @@ public class MainController {
                                  Model model) {
         List<Laptop> comparables = new ArrayList<>();
         for (int id : ids) {
-            Laptop l = marketDataService.findById(id);
+            Laptop l = marketDataService.findByLaptopId(id);
             if (l != null) {
                 // Compute radar scores for comparison
                 SearchCriteria dummyCriteria = new SearchCriteria();
