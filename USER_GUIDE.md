@@ -45,3 +45,15 @@ Once the backend server is running successfully, open your web browser and navig
 ### Troubleshooting
 - **Port 8080 is in use:** If you see an error indicating that port 8080 is already in use, you can stop the conflicting process or change this app's port by modifying `src/main/resources/application.properties` (if it exists) to add: `server.port=8081`. 
 - **Java version mismatch:** Ensure that your `JAVA_HOME` environment variable is strictly pointing to JDK 17 if the build fails with class version errors.
+
+## Triggering a Scrape
+
+To manually trigger a web scrape (e.g. for Amazon or Flipkart), you can use the Admin UI at `http://localhost:8080/admin/scrape` or trigger it programmatically using `curl`.
+
+For example, to scrape 100 laptops from Amazon:
+
+```bash
+curl -X POST http://localhost:8080/admin/scrape \
+     -H "Content-Type: application/x-www-form-urlencoded" \
+     -d "source=amazon&limit=100"
+```

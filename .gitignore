@@ -31,3 +31,10 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### Confidential Files ###
+src/main/resources/application.properties
+application*.properties
+application*.yml
+.env
+/*.html

@@ -123,6 +123,19 @@
                         <td th:each="laptop : ${laptops}" th:text="${laptop.speakerQuality}">—</td>
                     </tr>
 
+                    <!-- PROVENANCE -->
+                    <tr class="spec-category">
+                        <td th:colspan="${#lists.size(laptops) + 1}">📡 Data Source</td>
+                    </tr>
+                    <tr>
+                        <td>Source</td>
+                        <td th:each="laptop : ${laptops}" th:text="${laptop.source != null ? laptop.source : 'SEEDER'}">—</td>
+                    </tr>
+                    <tr>
+                        <td>Updated On</td>
+                        <td th:each="laptop : ${laptops}" th:text="${laptop.lastScrapedAt != null ? #dates.format(laptop.lastScrapedAt, 'dd-MMM-yyyy') : 'N/A'}">—</td>
+                    </tr>
+
                     <!-- ACTIONS -->
                     <tr class="spec-category">
                         <td th:colspan="${#lists.size(laptops) + 1}">🛒 Actions</td>
@@ -130,7 +143,7 @@
                     <tr>
                         <td>Store Link</td>
                         <td th:each="laptop : ${laptops}">
-                            <a th:href="'https://www.amazon.in/s?k=' + ${laptop.title}" target="_blank" class="btn btn-buy" style="padding:0.4rem 1rem; font-size:0.85rem; text-decoration:none;">Buy Now</a>
+                            <a th:href="${laptop.productUrl != null ? laptop.productUrl : 'https://www.amazon.in/s?k=' + laptop.title}" target="_blank" class="btn btn-buy" style="padding:0.4rem 1rem; font-size:0.85rem; text-decoration:none;">Buy Now</a>
                         </td>
                     </tr>
                 </tbody>

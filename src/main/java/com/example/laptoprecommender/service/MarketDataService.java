@@ -63,6 +63,9 @@ public class MarketDataService {
         l.setBuildMaterial(s.getBuildMaterial());
         l.setWeight(s.getWeight());
         l.setBatteryLife(s.getBatteryLife());
+        l.setSource(s.getSource());
+        l.setProductUrl(s.getProductUrl());
+        l.setLastScrapedAt(s.getLastScrapedAt());
         l.setGeekbenchSingle(s.getGeekbenchSingle());
         l.setGeekbenchMulti(s.getGeekbenchMulti());
         l.setCinebenchScore(s.getCinebenchScore());

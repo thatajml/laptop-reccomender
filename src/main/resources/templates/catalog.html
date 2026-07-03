@@ -148,6 +148,7 @@
                             <th>Storage</th>
                             <th>Display</th>
                             <th>Rating</th>
+                            <th>Source</th>
                             <th>Buy</th>
                         </tr>
                     </thead>
@@ -166,7 +167,13 @@
                             <td th:text="${laptop.storageCapacity}">Storage</td>
                             <td th:text="${laptop.displaySize} + '&quot; ' + ${laptop.displayType}">Display</td>
                             <td th:text="${laptop.rating} + ' ⭐'">Rating</td>
-                            <td><a th:href="'https://www.amazon.in/s?k=' + ${laptop.title}" target="_blank" class="amazon-link">Amazon →</a></td>
+                            <td>
+                                <span class="badge bg-secondary" th:text="${laptop.source != null ? laptop.source : 'SEEDER'}">Source</span>
+                                <div style="font-size: 0.7rem; color: gray;" th:if="${laptop.lastScrapedAt != null}" th:text="${#dates.format(laptop.lastScrapedAt, 'dd-MMM-yyyy')}">Date</div>
+                            </td>
+                            <td>
+                                <a th:href="${laptop.productUrl != null ? laptop.productUrl : 'https://www.amazon.in/s?k=' + laptop.title}" target="_blank" class="amazon-link">Buy →</a>
+                            </td>
                         </tr>
                     </tbody>
                 </table>

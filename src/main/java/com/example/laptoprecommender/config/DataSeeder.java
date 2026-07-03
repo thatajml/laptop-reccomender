@@ -2,6 +2,7 @@ package com.example.laptoprecommender.config;
 
 import com.example.laptoprecommender.model.Laptop;
 import com.example.laptoprecommender.repository.LaptopRepository;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 
@@ -24,12 +25,19 @@ public class DataSeeder implements CommandLineRunner {
     private static final String IMG_STD  = "https://images.unsplash.com/photo-1525547719571-a2d4ac8945e2?w=400&h=300&fit=crop";
     private static final String IMG_WORK = "https://images.unsplash.com/photo-1588872657578-7efd1f1555ed?w=400&h=300&fit=crop";
 
+    @Value("${app.data-source-mode:seeder}")
+    private String dataSourceMode;
+
     public DataSeeder(LaptopRepository laptopRepository) {
         this.laptopRepository = laptopRepository;
     }
 
     @Override
     public void run(String... args) {
+        if (!"seeder".equalsIgnoreCase(dataSourceMode) && !"seeder-then-scrape".equalsIgnoreCase(dataSourceMode)) {
+            System.out.println("[DataSeeder] Data source mode is '" + dataSourceMode + "'. Skipping static data seeder.");
+            return;
+        }
         long count = laptopRepository.count();
         if (count > 0) {
             System.out.println("[DataSeeder] Database already seeded (" + count + " laptops found). Skipping.");
@@ -62,6 +70,7 @@ public class DataSeeder implements CommandLineRunner {
         l.setStorageCapacity(stor); l.setResolution(res); l.setRefreshRate(hz);
         l.setUsbACount(uA); l.setUsbCCount(uC); l.setHdmiPort(hdmi); l.setSdCardSlot(sd);
         l.setSpeakerQuality(spk); l.setBuildMaterial(bld); l.setWeight(wt); l.setBatteryLife(bat);
+        l.setSource("SEEDER");
         L.add(l);
     }
 
@@ -1257,7 +1266,7 @@ public class DataSeeder implements CommandLineRunner {
     // ==========================================================================================
     //  AUTO-ASSIGN BENCHMARKS from CPU tier/generation
     // ==========================================================================================
-    private void assignBenchmarks(List<Laptop> laptops) {
+    public void assignBenchmarks(List<Laptop> laptops) {
         for (Laptop l : laptops) {
             String tier = l.getCpuTier() != null ? l.getCpuTier().toLowerCase() : "";
             String gen = l.getCpuGeneration() != null ? l.getCpuGeneration().toLowerCase() : "";

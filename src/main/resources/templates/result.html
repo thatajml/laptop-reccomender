@@ -71,12 +71,17 @@
                     <span th:text="'₹' + ${#numbers.formatDecimal(laptop.price, 1, 0)}">₹0</span>
                     <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
                         <a th:href="'https://www.youtube.com/results?search_query=' + ${laptop.title} + ' review'" target="_blank" class="btn btn-outline" style="text-decoration:none; width:auto; padding:0.5rem 0.8rem; font-size: 0.85rem; border-color:#ff0000; color:#ff0000;">▶ Review</a>
-                        <a th:href="'https://www.amazon.in/s?k=' + ${laptop.title}" target="_blank" class="btn btn-buy" style="text-decoration:none;">Amazon</a>
+                        <a th:href="${laptop.productUrl != null ? laptop.productUrl : 'https://www.amazon.in/s?k=' + laptop.title}" target="_blank" class="btn btn-buy" style="text-decoration:none;">Buy Now</a>
                     </div>
                 </div>
 
                 <div style="margin-bottom: 0.6rem;">
                     <span th:each="reason : ${laptop.reasons}" class="reason-tag" th:text="${reason}">Reason</span>
+                </div>
+
+                <div style="margin-bottom: 0.6rem; font-size: 0.8rem; color: var(--text-secondary);">
+                    Source: <strong th:text="${laptop.source != null ? laptop.source : 'SEEDER'}">SEEDER</strong>
+                    <span th:if="${laptop.lastScrapedAt != null}" th:text="' · Updated: ' + ${#dates.format(laptop.lastScrapedAt, 'dd-MMM-yyyy')}"></span>
                 </div>
 
                 <!-- Why This Laptop -->
@@ -242,7 +247,7 @@
                         <td th:text="${laptop.gpuModel}" style="padding: 1rem; color:var(--text-secondary);"></td>
                         <td th:text="${laptop.ramGB} + 'GB / ' + ${laptop.storageCapacity}" style="padding: 1rem; color:var(--text-secondary);"></td>
                         <td style="padding: 1rem; display: flex; gap: 0.8rem; flex-wrap: wrap;">
-                            <a th:href="'https://www.amazon.in/s?k=' + ${laptop.title}" target="_blank" style="color:var(--accent); text-decoration:none; font-weight: bold;">Amazon →</a>
+                            <a th:href="${laptop.productUrl != null ? laptop.productUrl : 'https://www.amazon.in/s?k=' + laptop.title}" target="_blank" style="color:var(--accent); text-decoration:none; font-weight: bold;">Buy →</a>
                             <a th:href="'https://www.youtube.com/results?search_query=' + ${laptop.title} + ' review'" target="_blank" style="color:#ff0000; text-decoration:none; font-weight: bold;">Review ▶</a>
                         </td>
                     </tr>

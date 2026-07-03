@@ -2,6 +2,7 @@ package com.example.laptoprecommender.model;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.time.Instant;
 
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.Transient;
@@ -43,6 +44,11 @@ public class Laptop {
     private String buildMaterial;   // "Plastic", "Aluminum", "Magnesium", "Carbon Fiber"
     private double weight;          // kg
     private double batteryLife;     // hours
+
+    // Data Provenance
+    private String source;          // "SEEDER" or "SCRAPED_AMAZON" or "SCRAPED_FLIPKART"
+    private String productUrl;      // Link to actual product page
+    private Instant lastScrapedAt;  // When this data was last refreshed
 
     // Recommendation (transient — computed at runtime, not stored in DB)
     @Transient
@@ -154,6 +160,15 @@ public class Laptop {
 
     public double getBatteryLife() { return batteryLife; }
     public void setBatteryLife(double batteryLife) { this.batteryLife = batteryLife; }
+
+    public String getSource() { return source; }
+    public void setSource(String source) { this.source = source; }
+
+    public String getProductUrl() { return productUrl; }
+    public void setProductUrl(String productUrl) { this.productUrl = productUrl; }
+
+    public Instant getLastScrapedAt() { return lastScrapedAt; }
+    public void setLastScrapedAt(Instant lastScrapedAt) { this.lastScrapedAt = lastScrapedAt; }
 
     public double getScore() { return score; }
     public void setScore(double score) { this.score = score; }

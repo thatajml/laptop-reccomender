@@ -1,4 +1,4 @@
-package com.example.laptop_recommender;
+package com.example.laptoprecommender;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;

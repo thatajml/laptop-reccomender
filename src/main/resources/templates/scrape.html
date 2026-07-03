@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Web Scraping</title>
+    <!-- Use similar styling to the rest of the application -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { background-color: #f8f9fa; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        .navbar { background-color: #212529; }
+        .navbar-brand { font-weight: bold; color: #fff; }
+        .card { border-radius: 12px; border: none; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+    </style>
+</head>
+<body>
+
+<!-- Navbar -->
+<nav class="navbar navbar-expand-lg navbar-dark mb-4">
+    <div class="container">
+        <a class="navbar-brand" href="/"><i class="fas fa-laptop"></i> Laptop Recommender - Admin</a>
+        <div class="collapse navbar-collapse">
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="/">Home</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/catalog">Catalog</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<div class="container">
+    <h2 class="mb-4">Data Scraping Control Panel</h2>
+    
+    <div class="row">
+        <div class="col-md-5">
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h5 class="card-title mb-3">Trigger New Scrape</h5>
+                    <form action="/admin/scrape" method="post">
+                        <div class="mb-3">
+                            <label class="form-label">Data Source</label>
+                            <select class="form-select" name="source">
+                                <option value="flipkart" th:selected="${source == 'flipkart'}">Flipkart.com</option>
+                                <option value="amazon" th:selected="${source == 'amazon'}">Amazon.in</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Max Laptops to Scrape</label>
+                            <input type="number" class="form-control" name="limit" th:value="${limit != null ? limit : 100}" min="10" max="500">
+                            <div class="form-text">Higher limits take longer and may trigger bot protection.</div>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100" id="scrapeBtn">
+                            <i class="fas fa-sync-alt"></i> Start Scraping
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-7">
+            <div class="card" th:if="${result != null}">
+                <div class="card-body">
+                    <h5 class="card-title">Scraping Results</h5>
+                    
+                    <div class="alert alert-info mt-3" th:if="${!result.errors.isEmpty()}">
+                        <h6><i class="fas fa-exclamation-triangle"></i> Issues/Errors:</h6>
+                        <ul class="mb-0">
+                            <li th:each="error : ${result.errors}" th:text="${error}"></li>
+                        </ul>
+                    </div>
+                    
+                    <table class="table table-bordered mt-3">
+                        <tbody>
+                            <tr>
+                                <th>Source</th>
+                                <td th:text="${result.source}"></td>
+                            </tr>
+                            <tr>
+                                <th>Duration</th>
+                                <td th:text="${result.durationMs + ' ms'}"></td>
+                            </tr>
+                            <tr>
+                                <th>Raw Laptops Found</th>
+                                <td th:text="${result.totalFound}"></td>
+                            </tr>
+                            <tr>
+                                <th class="text-success">Successfully Parsed</th>
+                                <td class="text-success fw-bold" th:text="${result.successfullyParsed}"></td>
+                            </tr>
+                            <tr>
+                                <th class="text-danger">Failed to Parse</th>
+                                <td class="text-danger" th:text="${result.failedToParse}"></td>
+                            </tr>
+                            <tr>
+                                <th>New Laptops Inserted</th>
+                                <td th:text="${result.newLaptops}"></td>
+                            </tr>
+                            <tr>
+                                <th>Existing Laptops Updated</th>
+                                <td th:text="${result.updatedLaptops}"></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    
+                    <div class="mt-3 text-center">
+                        <a href="/catalog" class="btn btn-outline-secondary">View Catalog</a>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card" th:if="${result == null}">
+                <div class="card-body text-center text-muted py-5">
+                    <i class="fas fa-robot fa-3x mb-3"></i>
+                    <p>Select a source and click "Start Scraping" to fetch live data.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.querySelector('form').addEventListener('submit', function() {
+        var btn = document.getElementById('scrapeBtn');
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Scraping (this may take a minute)...';
+        btn.disabled = true;
+    });
+</script>
+
+</body>
+</html>
