@@ -8,6 +8,8 @@ Follow these steps to run the Laptop Recommender application on your local machi
    - Open your terminal or command prompt.
    - Run `java -version` to verify you have it installed.
    - If not installed, download it from [Oracle](https://www.oracle.com/java/technologies/javase/jdk17-archive-downloads.html) or use [Adoptium (Eclipse Temurin)](https://adoptium.net/temurin/releases/?version=17).
+2. **Google Chrome:** The web scrapers use Headless Selenium which requires a recent version of Google Chrome to be installed on your system.
+3. **MongoDB Configuration:** A valid MongoDB URI must be provided via `application.properties` or environment variables for the database connection.
 
 ## Running the Application
 
@@ -45,6 +47,14 @@ Once the backend server is running successfully, open your web browser and navig
 ### Troubleshooting
 - **Port 8080 is in use:** If you see an error indicating that port 8080 is already in use, you can stop the conflicting process or change this app's port by modifying `src/main/resources/application.properties` (if it exists) to add: `server.port=8081`. 
 - **Java version mismatch:** Ensure that your `JAVA_HOME` environment variable is strictly pointing to JDK 17 if the build fails with class version errors.
+- **MongoDB Connection Error:** Ensure you have configured a valid MongoDB URI.
+
+## Configuring Data Source Modes
+
+You can control whether the application seeds fake data or relies entirely on scraped live data by setting `app.data-source-mode` in `application.properties`:
+- `seeder`: Seeds dummy JSON data into the database (default).
+- `scraper`: Relies entirely on Selenium live scraping.
+- `seeder-then-scrape`: Seeds dummy data, then augments it with live scraped data.
 
 ## Triggering a Scrape
 
