@@ -72,6 +72,7 @@
                     <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
                         <a th:href="'https://www.youtube.com/results?search_query=' + ${laptop.title} + ' review'" target="_blank" class="btn btn-outline" style="text-decoration:none; width:auto; padding:0.5rem 0.8rem; font-size: 0.85rem; border-color:#ff0000; color:#ff0000;">▶ Review</a>
                         <a th:href="'https://www.amazon.in/s?k=' + ${laptop.title}" target="_blank" class="btn btn-buy" style="text-decoration:none;">Amazon</a>
+                        <button type="button" class="btn btn-store" th:attr="data-title=${laptop.title}" onclick="openStoreModal(this.getAttribute('data-title'))">📍 Nearby Stores</button>
                     </div>
                 </div>
 
@@ -241,9 +242,10 @@
                         <td th:text="${laptop.cpuTier} + ' ' + ${laptop.cpuGeneration}" style="padding: 1rem; color:var(--text-secondary);"></td>
                         <td th:text="${laptop.gpuModel}" style="padding: 1rem; color:var(--text-secondary);"></td>
                         <td th:text="${laptop.ramGB} + 'GB / ' + ${laptop.storageCapacity}" style="padding: 1rem; color:var(--text-secondary);"></td>
-                        <td style="padding: 1rem; display: flex; gap: 0.8rem; flex-wrap: wrap;">
+                        <td style="padding: 1rem; display: flex; gap: 0.8rem; flex-wrap: wrap; align-items: center;">
                             <a th:href="'https://www.amazon.in/s?k=' + ${laptop.title}" target="_blank" style="color:var(--accent); text-decoration:none; font-weight: bold;">Amazon →</a>
                             <a th:href="'https://www.youtube.com/results?search_query=' + ${laptop.title} + ' review'" target="_blank" style="color:#ff0000; text-decoration:none; font-weight: bold;">Review ▶</a>
+                            <a href="#" th:attr="data-title=${laptop.title}" onclick="openStoreModal(this.getAttribute('data-title')); return false;" style="color:#10B981; text-decoration:none; font-weight: bold;">📍 Stores</a>
                         </td>
                     </tr>
                 </tbody>
@@ -424,5 +426,8 @@
         }
         /*]]>*/
     </script>
+
+    <!-- Reusable Store Locator Modal Fragment -->
+    <div th:replace="~{fragments/store-modal :: storeModal}"></div>
 </body>
 </html>

@@ -130,7 +130,10 @@
                     <tr>
                         <td>Store Link</td>
                         <td th:each="laptop : ${laptops}">
-                            <a th:href="'https://www.amazon.in/s?k=' + ${laptop.title}" target="_blank" class="btn btn-buy" style="padding:0.4rem 1rem; font-size:0.85rem; text-decoration:none;">Buy Now</a>
+                            <div style="display:flex; gap:0.5rem; flex-wrap:wrap; justify-content:center; align-items:center;">
+                                <a th:href="'https://www.amazon.in/s?k=' + ${laptop.title}" target="_blank" class="btn btn-buy" style="padding:0.4rem 1rem; font-size:0.85rem; text-decoration:none;">Buy Now</a>
+                                <button type="button" class="btn btn-store" style="padding:0.4rem 0.8rem; font-size:0.85rem;" th:attr="data-title=${laptop.title}" onclick="openStoreModal(this.getAttribute('data-title'))">📍 Stores</button>
+                            </div>
                         </td>
                     </tr>
                 </tbody>
@@ -279,5 +282,8 @@
         }
         /*]]>*/
     </script>
+
+    <!-- Reusable Store Locator Modal Fragment -->
+    <div th:replace="~{fragments/store-modal :: storeModal}"></div>
 </body>
 </html>

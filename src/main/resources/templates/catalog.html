@@ -166,7 +166,12 @@
                             <td th:text="${laptop.storageCapacity}">Storage</td>
                             <td th:text="${laptop.displaySize} + '&quot; ' + ${laptop.displayType}">Display</td>
                             <td th:text="${laptop.rating} + ' ⭐'">Rating</td>
-                            <td><a th:href="'https://www.amazon.in/s?k=' + ${laptop.title}" target="_blank" class="amazon-link">Amazon →</a></td>
+                            <td>
+                                <div style="display:flex; gap:0.5rem; align-items:center;">
+                                    <a th:href="'https://www.amazon.in/s?k=' + ${laptop.title}" target="_blank" class="amazon-link">Amazon →</a>
+                                    <button type="button" class="btn btn-store" style="padding:0.25rem 0.6rem; font-size:0.75rem;" th:attr="data-title=${laptop.title}" onclick="openStoreModal(this.getAttribute('data-title'))">📍 Stores</button>
+                                </div>
+                            </td>
                         </tr>
                     </tbody>
                 </table>
@@ -232,5 +237,8 @@
             document.getElementById('darkToggle').textContent = isDark ? '🌙' : '☀️';
         }
     </script>
+
+    <!-- Reusable Store Locator Modal Fragment -->
+    <div th:replace="~{fragments/store-modal :: storeModal}"></div>
 </body>
 </html>
