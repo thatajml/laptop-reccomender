@@ -1,0 +1,11 @@
+spring.application.name=laptop-recommender
+server.port=8080
+
+# MongoDB Configuration
+# Local Docker instance:
+spring.data.mongodb.uri=mongodb://localhost:27017/laptop_recommender
+spring.mongodb.uri=mongodb://localhost:27017/laptop_recommender
+
+# Or MongoDB Atlas:
+# spring.data.mongodb.uri=mongodb+srv://<username>:<password>@<cluster>.mongodb.net/laptop_recommender?retryWrites=true&w=majority
+# spring.mongodb.uri=mongodb+srv://<username>:<password>@<cluster>.mongodb.net/laptop_recommender?retryWrites=true&w=majority
